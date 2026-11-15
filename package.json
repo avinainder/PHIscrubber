@@ -1,5 +1,5 @@
 {
-  "name": "phi-scrubber",
+  "name": "phiscrubber",
   "version": "0.1.0",
   "private": true,
   "description": "In-browser PHI scrubber: de-identify clinical notes before pasting them into an LLM",
