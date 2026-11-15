@@ -3,7 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "description": "In-browser PHI scrubber: de-identify clinical notes before pasting them into an LLM",
+  "keywords": [
+    "phi",
+    "de-identification",
+    "deidentification",
+    "hipaa",
+    "clinical-notes",
+    "privacy",
+    "redaction",
+    "healthcare",
+    "llm"
+  ],
+  "homepage": "https://github.com/avinainder/PHIscrubber#readme",
+  "bugs": {
+    "url": "https://github.com/avinainder/PHIscrubber/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avinainder/PHIscrubber.git"
+  },
+  "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "test": "node --test",
     "start": "python3 dev-server.py"
