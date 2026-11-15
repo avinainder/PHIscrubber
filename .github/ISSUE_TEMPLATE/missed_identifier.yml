@@ -1,0 +1,56 @@
+name: Missed identifier
+description: The scrubber left in something that should have been removed
+labels: ["missed-identifier"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not paste real patient information.** Rewrite the example with an invented
+        name, number or place that has the same shape as the one that was missed.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of identifier
+      options:
+        - Name (patient, relative or clinician)
+        - Record or account number
+        - Date or age
+        - Phone, email or URL
+        - Address or location
+        - Facility
+        - Occupation or employer
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Invented example that reproduces it
+      description: The shortest text that shows the miss. Keep line breaks as they were.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: What the scrubbed pane showed
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: How the text got into the page
+      options:
+        - Pasted
+        - PDF
+        - Screenshot (OCR)
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: Every name, number and place in this issue is invented.
+          required: true
