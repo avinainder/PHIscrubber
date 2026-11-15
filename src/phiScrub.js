@@ -87,6 +87,11 @@ const ID_LABEL = new RegExp(
   'NPI|DEA)\\s*[:#=]?\\s*', 'gi');
 const ID_VALUE = /[A-Za-z0-9][A-Za-z0-9-]{2,}/y;
 
+// Shortest line that is treated as wrapped prose rather than a list item.
+const WRAP_MIN = 30;
+// Whitespace inside a phrase: spaces, or a single line break.
+const GAP = '(?:[ \\t]+|[ \\t]*\\n[ \\t]*)';
+
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 function fullYear(y, nowYear) {
@@ -140,6 +145,18 @@ export function findSpans(text, opts = {}) {
     for (const tok of value.split(/[^A-Za-z'’-]+/)) {
       if (isNameWord(tok) && !CLINICAL.has(tok.toLowerCase())) learned.add(tok);
     }
+  };
+  // Hard-wrapped prose (EHR exports, PDF text) breaks a sentence anywhere,
+  // including between a cue and the name it introduces ("her daughter\nMary").
+  // A line break counts as a wrap only when the line it ends is long enough
+  // to be prose — in a short list line ("Lives with son\nDenies tobacco")
+  // the next line starts something new.
+  const lowerSeen = new Set(text.match(/\b[a-z][a-z'’-]+\b/g) ?? []);
+  const wrappedBefore = (nl) => nl - (text.lastIndexOf('\n', nl - 1) + 1) >= WRAP_MIN;
+  /** True when [from, to) holds no line break, or only a prose wrap. */
+  const sameSentence = (from, to) => {
+    const nl = text.indexOf('\n', from);
+    return nl < 0 || nl >= to || wrappedBefore(nl);
   };
   /** Name-shaped run starting exactly at `at`; null when there is none. */
   const nameAt = (at) => {
@@ -273,8 +290,9 @@ export function findSpans(text, opts = {}) {
     add(m.index, m.index + m[0].length, 'place', '[LOCATION]', 68);
   });
   each(/\b\d{5}-\d{4}\b/g, (m) => add(m.index, m.index + m[0].length, 'place', '[ZIP]', 66));
-  each(/\b(?:liv(?:es|ing)|resid(?:es|ing)|resident|originally|born|raised|grew\s+up|(?:e|im)migrated|moved(?:\s+here)?|native|visiting|travel(?:s|ed|ling|ing)?)[ \t]+(?:in|at|of|from|to)[ \t]+((?:the[ \t]+)?[A-Z][A-Za-z'’-]+(?:,?[ \t]+[A-Z][A-Za-z'’-]+){0,3})/g, (m) => {
+  each(new RegExp(`\\b(?:liv(?:es|ing)|resid(?:es|ing)|resident|originally|born|raised|grew\\s+up|(?:e|im)migrated|moved(?:\\s+here)?|native|visiting|travel(?:s|ed|ling|ing)?)${GAP}(?:in|at|of|from|to)${GAP}((?:the[ \\t]+)?[A-Z][A-Za-z'’-]+(?:,?[ \\t]+[A-Z][A-Za-z'’-]+){0,3})`, 'g'), (m) => {
     const at = m.index + m[0].length - m[1].length;
+    if (!sameSentence(m.index, at)) return;
     add(at, at + m[1].length, 'place', '[LOCATION]', 68);
   });
   each(/\b[A-Z][\w'’&.-]*(?:[ \t]+(?:and|of|the|&|for|[A-Z][\w'’&.-]*)){0,5}[ \t]+(?:Hospital|Medical\s+Cent(?:er|re)|Health\s?care|Health(?:\s+System)?|Institute|Infirmary|Rehabilitation(?:\s+Cent(?:er|re))?|Nursing\s+Home|Skilled\s+Nursing(?:\s+Facility)?|Associates|Physicians|Medical\s+Group|University|College)\b/g,
@@ -300,12 +318,19 @@ export function findSpans(text, opts = {}) {
     add(m.index, m.index + m[1].length, 'name', '[CLINICIAN]', 77);
     learn(m[1]);
   });
-  each(/\b(?:daughter|son|wife|husband|spouse|partner|brother|sister|mother|father|niece|nephew|granddaughter|grandson|grandchild|cousin|aunt|uncle|caregiver|friend|neighbou?r|proxy|aide)s?(?:-in-law)?[ \t]*[,(]?[ \t]*(?:named[ \t]+)?(?=[A-Z])/gi, (m) => {
+  each(new RegExp(`\\b(?:daughter|son|wife|husband|spouse|partner|brother|sister|mother|father|niece|nephew|granddaughter|grandson|grandchild|cousin|aunt|uncle|caregiver|friend|neighbou?r|proxy|aide)s?(?:-in-law)?${GAP}?[,(]?[ \\t]*(?:named${GAP})?(?=[A-Z])`, 'gi'), (m) => {
     const at = m.index + m[0].length;
     const v = nameAt(at);
     if (!v) return;
     const first = v.split(/[\s,]+/)[0];
     if (!isNameWord(first) || CLINICAL.has(first.toLowerCase())) return;
+    if (m[0].includes('\n')) {
+      // Across a line break the next word may open a new sentence or section
+      // instead: require a prose wrap, and a word that is not a heading and
+      // is never written in lower case elsewhere.
+      if (!sameSentence(m.index, at) || lowerSeen.has(first.toLowerCase())) return;
+      if (/^[ \t]*:/.test(text.slice(at + v.length))) return;
+    }
     add(at, at + v.length, 'name', '[NAME]', 75);
     learn(v);
   });
@@ -348,7 +373,6 @@ export function findSpans(text, opts = {}) {
   // A capitalised word mid-sentence that never appears in lower case, is not
   // clinical vocabulary and was not caught above is the shape of a missed
   // name or town. It is not removed — the reviewer decides.
-  const lowerSeen = new Set(text.match(/\b[a-z][a-z'’-]+\b/g) ?? []);
   each(/[A-Z][a-z'’]+(?:-[A-Z][a-z]+)?/g, (m) => {
     const start = m.index, end = start + m[0].length;
     if (/[A-Za-z0-9]/.test(text[start - 1] ?? '') || /[A-Za-z0-9]/.test(text[end] ?? '')) return;
@@ -357,7 +381,14 @@ export function findSpans(text, opts = {}) {
     if (spans.some((s) => start < s.end && s.start < end)) return;
     const lineStart = text.lastIndexOf('\n', start - 1) + 1;
     const lead = text.slice(lineStart, start);
-    if (/^[\s\-•*·\d.)]*$/.test(lead)) return;            // first word on its line
+    if (/^[\s\-•*·\d.)]*$/.test(lead)) {                 // first word on its line…
+      // …unless the line above is prose that wrapped mid-sentence, in which
+      // case this word is as much mid-sentence as any other.
+      const prev = text.slice(0, Math.max(0, lineStart - 1));
+      const wrapped = /^[ \t]*$/.test(lead) && lineStart > 0 && wrappedBefore(lineStart - 1) &&
+        /[A-Za-z,][ \t]*$/.test(prev);
+      if (!wrapped) return;
+    }
     if (/[.!?:;]["')\]]?\s+$/.test(lead)) return;         // first word of a sentence
     let lineEnd = text.indexOf('\n', end);
     if (lineEnd < 0) lineEnd = text.length;

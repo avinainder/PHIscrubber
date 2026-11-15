@@ -143,8 +143,8 @@ the page has loaded.
 ## Limitations
 
 - Rules miss things: a misspelled name, an unlabelled ALL-CAPS name, a
-  nickname, a name split across a line break, or a rare diagnosis paired with
-  a small town.
+  nickname, a first name that opens a sentence with nothing to introduce it,
+  or a rare diagnosis paired with a small town.
 - OCR misreads letters. Check names carefully after dropping a screenshot.
 - PDFs without a text layer (scanned pages) yield nothing. Screenshot the
   page and drop the image instead. Only the first 40 pages of a PDF are read.

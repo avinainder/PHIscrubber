@@ -145,3 +145,40 @@ test('prompt guard fires on hard identifiers only', () => {
   assert.deepEqual(hardIdentifiers(NOTE).sort(),
     ['date of birth', 'patient name', 'phone number', 'record number', 'street address']);
 });
+
+test('a hard line wrap between a cue and its name does not hide the name', () => {
+  const wrapped = `Jane lives in Quincy with her daughter
+Mary. She can be reached through Mary at any time.`;
+  const a = run(wrapped);
+  assert.ok(!a.text.includes('Mary'), a.text);
+  assert.ok(a.names.includes('Mary'));
+
+  const named = run('She attends every clinic visit with her supportive son named\nBartholomew.');
+  assert.ok(!named.text.includes('Bartholomew'), named.text);
+
+  for (const note of [
+    'For the last several years the patient currently lives\nin Quincy with family.',
+    'For the last several years the patient currently lives in\nQuincy with family.',
+  ]) {
+    const { text } = run(note);
+    assert.ok(!text.includes('Quincy') && text.includes('[LOCATION]'), text);
+  }
+});
+
+test('a name that starts a wrapped line is at least flagged for review', () => {
+  const note = 'The history was obtained from the patient and then confirmed with\nBartholomew at the bedside.';
+  const { spans } = findSpans(note, { now: NOW });
+  assert.ok(spans.some((s) => s.kind === 'review' && note.slice(s.start, s.end) === 'Bartholomew'));
+});
+
+test('a line break after a short list line still starts something new', () => {
+  const list = run('Lives with son\nDenies tobacco and alcohol.\nLives with daughter\nMedications: Zestril 10 mg', { dropSocial: false });
+  assert.ok(list.text.includes('Denies') && list.text.includes('Medications'), list.text);
+  assert.equal(list.review, 0, list.text);
+
+  const heading = run('She came to the clinic visit today accompanied by her daughter\nAllergies: none known');
+  assert.ok(heading.text.includes('Allergies'), heading.text);
+
+  const sentence = run('She came to the clinic visit today accompanied by her daughter\nBreathing is comfortable and her breathing has improved.');
+  assert.ok(sentence.text.includes('Breathing'), sentence.text);
+});
