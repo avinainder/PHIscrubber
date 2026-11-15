@@ -33,6 +33,7 @@ scrubbed text is copied out.
 - [Development](#development)
 - [Contributing](#contributing)
 - [Security](#security)
+- [Credits](#credits)
 - [License](#license)
 
 ## Why
@@ -230,6 +231,11 @@ shape.
 
 To report a way that text can leave the page, or another vulnerability, see
 [SECURITY.md](SECURITY.md).
+
+## Credits
+
+Created by Avinainder Singh. For questions, contact
+<avinainder@gmail.com>.
 
 ## License
 

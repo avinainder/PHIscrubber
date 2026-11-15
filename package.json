@@ -23,6 +23,7 @@
     "url": "git+https://github.com/avinainder/PHIscrubber.git"
   },
   "license": "MIT",
+  "author": "Avinainder Singh <avinainder@gmail.com>",
   "type": "module",
   "engines": {
     "node": ">=22"

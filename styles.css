@@ -409,3 +409,12 @@ mark.r-keep {
   line-height: 1.45;
   color: var(--muted);
 }
+
+/* Credits */
+.credits {
+  margin: 20px 24px 28px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+.credits p { margin: 0; }
