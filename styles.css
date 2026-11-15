@@ -1,0 +1,411 @@
+/* PHI Scrubber — dark workstation look. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;           /* page */
+  --surface: #131c2e;      /* panels, title bar */
+  --field: #0f1727;        /* inputs, selects */
+  --border: #223049;
+  --border-2: #31415d;     /* interactive edges */
+  --text: #e8edf5;
+  --text-2: #c3cedd;       /* field labels */
+  --muted: #8fa0b5;        /* eyebrows, units — 5.5:1 on surface */
+  --accent: #38c6e0;
+  --accent-press: #56d3e9;
+  --accent-text: #7edcef;  /* accent-colored text on dark — 9:1 on surface */
+  --on-accent: #06222c;
+  --warn: #ffcf66;         /* risk callouts — 9:1 on surface */
+  /* Modern grotesk stack (SF Pro / Segoe UI Variable / Inter where present);
+     numerals in data readouts stay aligned via tabular-nums */
+  --font-ui: -apple-system, "SF Pro Text", "Segoe UI Variable", "Segoe UI",
+    Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  /* The titleblock floats — anchor/focus scrolls must not land under it */
+  scroll-padding-top: 72px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* --- Title bar ------------------------------------------------------------ */
+/* A translucent material layer the page scrolls under (not an opaque strip
+   that scrolls away) — structure without stealing focus. Falls back to the
+   solid surface where transparency is reduced or backdrop-filter is absent. */
+
+.titleblock {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  /* Scroll-edge effect: the dividing line exists only once content actually
+     passes underneath (app.js toggles .is-scrolled) — no hard divider at
+     scroll-top where nothing needs separating. */
+  border-bottom: 1px solid transparent;
+  transition: border-bottom-color 0.2s ease;
+}
+
+.titleblock.is-scrolled {
+  border-bottom-color: var(--border);
+}
+
+/* Safari < 18 exposes only -webkit-backdrop-filter, so the unprefixed probe
+   alone would hand the exact browsers that need the prefix the solid
+   fallback instead. */
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .titleblock {
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .titleblock {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+.tb-title {
+  flex: 1;
+  padding: 14px 24px 12px;
+  min-width: 0;
+}
+
+.titleblock h1 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+
+.tb-field {
+  margin: 0;
+  padding: 12px 20px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.tb-field dt {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.tb-field dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--accent-text);
+}
+
+.scrub-page a { color: var(--accent-text); }
+
+.scrub-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 18px 24px;
+  align-items: start;
+}
+
+.scrub-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-width: 0;
+}
+
+.scrub-panel h2 {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 650;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scrub-panel .fig-no {
+  font-family: var(--font-mono);
+  color: var(--accent-text);
+}
+
+.h-note {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+#source,
+.scrub-review {
+  width: 100%;
+  height: 46vh;
+  min-height: 260px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+#source { resize: vertical; }
+#source.is-drop { border-color: var(--accent); }
+
+.scrub-review {
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.scrub-empty {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-ui);
+}
+
+.scrub-review mark {
+  color: inherit;
+  border-radius: 4px;
+  padding: 1px 3px;
+  cursor: pointer;
+}
+
+mark.r-redact {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent-text);
+}
+
+mark.r-restored {
+  background: transparent;
+  outline: 1px solid var(--warn);
+  color: var(--warn);
+}
+
+mark.r-review {
+  background: color-mix(in srgb, var(--warn) 20%, transparent);
+  color: var(--warn);
+  border-bottom: 1px dashed var(--warn);
+}
+
+mark.r-keep {
+  background: transparent;
+  color: #8fe0a8;
+  border-bottom: 1px solid #8fe0a8;
+  cursor: default;
+}
+
+.scrub-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.scrub-legend mark {
+  font-family: var(--font-mono);
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+
+.scrub-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scrub-row--end { justify-content: flex-end; }
+
+.scrub-status,
+.scrub-tally {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent-text);
+}
+
+.scrub-tally { margin-right: auto; }
+.scrub-tally.has-review { color: var(--warn); }
+
+.scrub-page button {
+  font: 600 13.5px var(--font-ui);
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.scrub-page button:hover:not(:disabled) { border-color: var(--accent); }
+.scrub-page button:disabled { opacity: 0.45; cursor: default; }
+
+.scrub-page button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.scrub-page button.primary:hover:not(:disabled) { background: var(--accent-press); }
+
+.scrub-page :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.scrub-label {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+#terms {
+  width: 100%;
+  font: 13.5px var(--font-mono);
+  color: var(--text);
+  background: var(--field);
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.scrub-opts {
+  margin: 4px 0 0;
+  padding: 8px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.scrub-opts legend {
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.scrub-opts input { accent-color: var(--accent); margin-right: 6px; }
+
+.scrub-menu {
+  position: absolute;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.scrub-menu[hidden] { display: none; }
+
+@media (max-width: 860px) {
+  .scrub-layout { grid-template-columns: minmax(0, 1fr); padding: 14px 16px; }
+  #source, .scrub-review { height: 38vh; }
+  .scrub-page .tb-field { display: none; }
+}
+
+.disclaimer-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 18px 16px;
+  margin: 0 24px 18px;
+}
+
+.disclaimer-panel h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.disclaimer-lede {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+
+.disclaimer-lede strong { color: var(--warn); font-weight: 620; }
+
+.assumption-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 4px 22px;
+}
+
+.assumption-grid h3 {
+  margin: 8px 0 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent-text);
+}
+
+.assumption-grid ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.assumption-grid li { margin: 3px 0; }
+.assumption-grid li::marker { color: var(--border-2); }
+
+.report-note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}

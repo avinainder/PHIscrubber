@@ -1,0 +1,11 @@
+{
+  "name": "phi-scrubber",
+  "version": "0.1.0",
+  "private": true,
+  "description": "In-browser PHI scrubber: de-identify clinical notes before pasting them into an LLM",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "start": "python3 dev-server.py"
+  }
+}

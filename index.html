@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- The browser itself enforces "nothing leaves": this page may only load
+       code from its own origin and may not open a connection anywhere else. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; style-src 'self'; img-src 'self' blob: data:; connect-src 'self' blob: data:; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>PHI Scrubber</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="scrub-page">
+  <header class="titleblock">
+    <div class="tb-title">
+      <h1>PHI Scrubber</h1>
+      <p class="subtitle">De-identify a note here, then paste the result into Claude</p>
+    </div>
+    <dl class="tb-field">
+      <dt>Network</dt>
+      <dd>none · runs in this tab</dd>
+    </dl>
+    <dl class="tb-field">
+      <dt>Storage</dt>
+      <dd>none · gone on reload</dd>
+    </dl>
+  </header>
+
+  <div class="scrub-layout">
+    <section class="scrub-panel" aria-labelledby="src-h">
+      <h2 id="src-h"><span class="fig-no">1</span> Original note <span class="h-note">stays on this device</span></h2>
+      <textarea id="source" spellcheck="false" autocomplete="off" autocapitalize="off"
+                placeholder="Paste the note or report here. You can also drop a PDF or a screenshot."></textarea>
+      <div class="scrub-row">
+        <button type="button" id="open-file">Open PDF or screenshot</button>
+        <input type="file" id="file" accept="application/pdf,image/*" hidden>
+        <button type="button" id="clear">Clear</button>
+        <span class="scrub-status" id="status" role="status"></span>
+      </div>
+
+      <label class="scrub-label" for="terms">Always remove</label>
+      <input type="text" id="terms" spellcheck="false" autocomplete="off"
+             placeholder="Patient name, town, employer — separated by commas">
+      <p class="report-note">Typing the patient's name here is the most reliable way to catch every
+        mention, including nicknames the rules cannot recognise.</p>
+
+      <fieldset class="scrub-opts">
+        <legend>Rules</legend>
+        <label><input type="checkbox" id="opt-referring" checked> Keep the referring physician's name</label>
+        <label><input type="checkbox" id="opt-year" checked> Keep the year of a date</label>
+        <label><input type="checkbox" id="opt-social" checked> Remove social and family history sections</label>
+      </fieldset>
+    </section>
+
+    <section class="scrub-panel" aria-labelledby="out-h">
+      <h2 id="out-h"><span class="fig-no">2</span> Scrubbed text <span class="h-note">what Claude will see</span></h2>
+      <div id="review" class="scrub-review" tabindex="0" aria-live="polite">
+        <p class="scrub-empty">The scrubbed note appears here as you paste.</p>
+      </div>
+      <div class="scrub-legend">
+        <span><mark class="r-redact">[NAME]</mark> removed — click to put back</span>
+        <span><mark class="r-review">Word</mark> looks like a name — click to decide</span>
+        <span><mark class="r-keep">Dr. X</mark> kept on purpose</span>
+      </div>
+      <div class="scrub-row scrub-row--end">
+        <span class="scrub-tally" id="tally"></span>
+        <button type="button" id="remove-sel" disabled>Remove selected text</button>
+        <button type="button" id="copy" class="primary" disabled>Copy scrubbed text</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="menu" class="scrub-menu" hidden>
+    <button type="button" data-act="remove">Remove everywhere</button>
+    <button type="button" data-act="allow">Not an identifier</button>
+  </div>
+
+  <section class="disclaimer-panel" aria-label="Limits of the scrubber">
+    <h2>What this does and does not do</h2>
+    <p class="disclaimer-lede">Rules remove names, record numbers, dates, contact details, addresses,
+      facilities and ages over 89, and flag leftover proper nouns for you. Rules miss things: a
+      misspelled name, a nickname, a rare diagnosis paired with a small town. <strong>Read the
+      scrubbed text before you copy it</strong> — you are the final check. This is a workflow
+      safeguard, not a certified de-identification method; your institution's policy on AI tools
+      still applies.</p>
+  </section>
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

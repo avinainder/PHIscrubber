@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/phi-guard.mjs\"",
+            "timeout": 10,
+            "statusMessage": "Checking prompt for patient identifiers"
+          }
+        ]
+      }
+    ]
+  }
+}
