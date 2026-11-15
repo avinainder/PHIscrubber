@@ -12,4 +12,4 @@
 - [ ] `npm test` passes.
 - [ ] A test covers the new or changed rule.
 - [ ] No network request, storage, CDN link or runtime dependency was added.
-- [ ] The Content-Security-Policy in `index.html` is unchanged, or the change is explained above.
+- [ ] The Content-Security-Policy in `index.html` and `vercel.json` is unchanged, or the change is explained above (the two must match).

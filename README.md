@@ -7,6 +7,8 @@ De-identify a clinical note **in your browser** before pasting it into Claude,
 ChatGPT or any other LLM. The original text never leaves the page; only the
 scrubbed text is copied out.
 
+**Use it now: <https://phiscrubber.vercel.app>**
+
 ![PHI Scrubber: the original note on the left, the scrubbed text on the right](docs/screenshot.png)
 
 *The note in the screenshot is invented.*
@@ -125,6 +127,8 @@ clinical vocabulary that prevents false alarms leans toward cardiology.
 - **No network.** `index.html` carries a Content-Security-Policy that forbids
   any connection off the page's own origin. The browser enforces this, so it
   holds even if the code had a bug.
+  The hosted copy also sends the policy as a response header and refuses to
+  be embedded in a frame (`vercel.json`).
 - **No storage.** Nothing is written to cookies, `localStorage` or IndexedDB.
   Reloading the tab discards everything.
 - **No third-party code at runtime.** pdf.js and tesseract.js are committed
@@ -153,7 +157,9 @@ the page has loaded.
 The project is a folder of static files, so any static host works: GitHub
 Pages, Vercel, Netlify, Cloudflare Pages, an internal web server or a shared
 drive behind one. There is no build command and no output directory to set;
-serve the repository root.
+serve the repository root. On Vercel, `vercel.json` adds the security headers
+automatically; on other hosts, configure the same headers if the host allows
+it.
 
 Scrubbing still happens in each visitor's browser. The host only delivers the
 files and never sees a note. For a clinical team, hosting a copy on
@@ -211,6 +217,7 @@ npm test
 | Path | Contents |
 | --- | --- |
 | `index.html`, `styles.css` | The page and its Content-Security-Policy |
+| `vercel.json` | Security headers for the hosted copy |
 | `src/phiScrub.js` | Scrubbing rules (pure functions) |
 | `src/app.js` | Page controller |
 | `src/pdfText.js`, `src/ocr.js` | PDF text extraction and screenshot OCR |
