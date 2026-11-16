@@ -168,6 +168,24 @@ body {
   color: var(--muted);
 }
 
+/* Tells the reader there is no "scrub" step to trigger */
+.live-badge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-text);
+}
+.live-badge::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 #source,
 .scrub-review {
   width: 100%;
